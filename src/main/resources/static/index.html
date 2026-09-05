@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultor de Festivos</title>
+    <style>
+        /* Estilos modernos y bonitos */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        h1 span {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #777;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #resultado {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            display: none;
+        }
+        .festivo {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .no-festivo {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .error {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .footer {
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗓️ <span>Festivo?</span></h1>
+        <p class="subtitle">Consulta si un día es festivo en Colombia</p>
+
+        <!-- Selección de País -->
+        <div class="input-group">
+            <label for="pais">País</label>
+            <select id="pais">
+                <option value="Colombia">Colombia</option>
+                <!-- Puedes agregar más países aquí si los agregas a la BD -->
+            </select>
+        </div>
+
+        <!-- Selección de Fecha -->
+        <div class="input-group">
+            <label for="fecha">Fecha</label>
+            <input type="date" id="fecha">
+        </div>
+
+        <!-- Botón -->
+        <button onclick="consultarFestivo()">🔍 Consultar</button>
+
+        <!-- Loader -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado"></div>
+
+        <div class="footer">
+            <small>Desarrollado con Spring Boot & H2</small>
+        </div>
+    </div>
+
+    <script>
+        async function consultarFestivo() {
+            const pais = document.getElementById('pais').value;
+            const fechaInput = document.getElementById('fecha');
+            const fecha = fechaInput.value;
+
+            // Validar que la fecha esté seleccionada
+            if (!fecha) {
+                mostrarResultado('Por favor selecciona una fecha.', 'error');
+                return;
+            }
+
+            // Mostrar loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultado').style.display = 'none';
+
+            try {
+                // Construir URL de la API
+                const url = `/api/festivo/consultar?pais=${encodeURIComponent(pais)}&fecha=${fecha}`;
+                
+                // Hacer la petición
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Ocultar loading
+                document.getElementById('loading').style.display = 'none';
+
+                // Mostrar resultado
+                if (data.error) {
+                    mostrarResultado(`❌ ${data.error}`, 'error');
+                } else if (data.esFestivo) {
+                    mostrarResultado(`🎉 ¡SÍ es festivo! 🎉`, 'festivo');
+                } else {
+                    mostrarResultado(`😞 No es festivo.`, 'no-festivo');
+                }
+            } catch (error) {
+                // Ocultar loading
+                document.getElementById('loading').style.display = 'none';
+                mostrarResultado('⚠️ Error al conectar con el servidor.', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        function mostrarResultado(mensaje, tipo) {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.textContent = mensaje;
+            resultadoDiv.className = tipo; // 'festivo', 'no-festivo', 'error'
+            resultadoDiv.style.display = 'block';
+        }
+
+        // Opcional: Establecer la fecha de hoy por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = hoy;
+        });
+    </script>
+</body>
+</html>
