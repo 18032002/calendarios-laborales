@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendario Anual</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 30px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .filtros {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+        .filtros label {
+            font-weight: 600;
+            color: #555;
+        }
+        .filtros input, .filtros select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .filtros button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .filtros button:hover {
+            background: #5a6fd6;
+        }
+
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .mes-card {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .mes-titulo {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .semana-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .dias-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .dia {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: #e9ecef;
+            color: #333;
+            cursor: default;
+            transition: 0.2s;
+        }
+        .dia.LABORAL {
+            background: #d4edda;
+            color: #155724;
+        }
+        .dia.FIN_SEMANA {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        .dia.FESTIVO {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: 700;
+        }
+        .dia.vacio {
+            background: transparent;
+            color: transparent;
+        }
+
+        .leyenda {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 25px 0 10px;
+            flex-wrap: wrap;
+        }
+        .leyenda span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+        .leyenda .color-box {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+        .color-box.laboral { background: #d4edda; }
+        .color-box.fin-semana { background: #e2e3e5; }
+        .color-box.festivo { background: #f8d7da; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #888;
+        }
+        .error-msg {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .calendario-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 500px) {
+            .calendario-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📅 Calendario Anual Clasificado</h1>
+    <div class="filtros">
+        <label>País:
+            <select id="paisSelect">
+                <option value="Colombia">Colombia</option>
+            </select>
+        </label>
+        <label>Año:
+            <input type="number" id="anioInput" value="2023" min="2000" max="2100" />
+        </label>
+        <button onclick="cargarCalendario()">Ver calendario</button>
+    </div>
+
+    <div class="leyenda">
+        <span><span class="color-box laboral"></span> Laboral</span>
+        <span><span class="color-box fin-semana"></span> Fin de semana</span>
+        <span><span class="color-box festivo"></span> Festivo</span>
+    </div>
+
+    <div id="contenedor-calendario">
+        <div class="loading">Selecciona un país y año, y haz clic en "Ver calendario".</div>
+    </div>
+</div>
+
+<script>
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    async function cargarCalendario() {
+        const pais = document.getElementById('paisSelect').value;
+        const anio = document.getElementById('anioInput').value;
+
+        if (!pais || !anio) {
+            document.getElementById('contenedor-calendario').innerHTML = '<div class="error-msg">Por favor selecciona país y año.</div>';
+            return;
+        }
+
+        document.getElementById('contenedor-calendario').innerHTML = '<div class="loading">Cargando calendario...</div>';
+
+        try {
+            const url = `/api/calendario/${encodeURIComponent(pais)}/${anio}`;
+            console.log('Consultando:', url); // Para depuración
+
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                throw new Error(`Error ${resp.status}: ${resp.statusText}`);
+            }
+            const data = await resp.json();
+
+            console.log('Datos recibidos:', data); // Para depuración
+
+            if (!data || data.length === 0) {
+                document.getElementById('contenedor-calendario').innerHTML = '<div class="error-msg">No hay datos para este año. Asegúrate de haber generado el calendario primero.</div>';
+                return;
+            }
+
+            // Agrupar por mes
+            const porMes = {};
+            data.forEach(d => {
+                const fecha = new Date(d.fecha);
+                const mes = fecha.getMonth();
+                if (!porMes[mes]) porMes[mes] = [];
+                porMes[mes].push(d);
+            });
+
+            let html = '<div class="calendario-grid">';
+            for (let mes = 0; mes < 12; mes++) {
+                const dias = porMes[mes] || [];
+                html += `<div class="mes-card"><div class="mes-titulo">${meses[mes]}</div>`;
+                html += `<div class="semana-header">
+                            <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                        </div>`;
+                html += `<div class="dias-grid">`;
+
+                // Primer día del mes (Lunes = 1, Domingo = 7)
+                if (dias.length > 0) {
+                    const primerDia = new Date(dias[0].fecha);
+                    let diaSemana = primerDia.getDay(); // 0=Domingo, 1=Lunes...
+                    // Ajustar para que Lunes sea 1
+                    let offset = (diaSemana === 0) ? 6 : diaSemana - 1;
+                    for (let i = 0; i < offset; i++) {
+                        html += `<div class="dia vacio"></div>`;
+                    }
+
+                    dias.forEach(d => {
+                        const fecha = new Date(d.fecha);
+                        const diaNum = fecha.getDate();
+                        const tipo = d.tipo || '';
+                        html += `<div class="dia ${tipo}">${diaNum}</div>`;
+                    });
+                }
+                html += `</div></div>`;
+            }
+            html += '</div>';
+            document.getElementById('contenedor-calendario').innerHTML = html;
+
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('contenedor-calendario').innerHTML = `
+                <div class="error-msg">
+                    ❌ Error: ${error.message}<br>
+                    <small>Revisa la consola (F12) para más detalles.</small>
+                </div>
+            `;
+        }
+    }
+
+    // Cargar automáticamente al abrir la página
+    window.onload = cargarCalendario;
+</script>
+</body>
+</html>

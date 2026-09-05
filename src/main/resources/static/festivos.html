@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listado de Festivos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 30px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .filtros {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+        .filtros label {
+            font-weight: 600;
+            color: #555;
+        }
+        .filtros input, .filtros select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .filtros button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .filtros button:hover {
+            background: #5a6fd6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f1f3f5;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .error-msg {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .sin-datos {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge.fijo { background: #d4edda; color: #155724; }
+        .badge.puente { background: #fff3cd; color: #856404; }
+        .badge.pascua { background: #cce5ff; color: #004085; }
+        .badge.pascua-puente { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📋 Listado de Festivos</h1>
+    <div class="filtros">
+        <label>País:
+            <select id="paisSelect">
+                <option value="Colombia">Colombia</option>
+            </select>
+        </label>
+        <label>Año:
+            <input type="number" id="anioInput" value="2023" min="2000" max="2100" />
+        </label>
+        <button onclick="cargarFestivos()">Buscar</button>
+    </div>
+
+    <div id="contenedor-tabla">
+        <div class="loading">Selecciona un país y año, y haz clic en "Buscar".</div>
+    </div>
+</div>
+
+<script>
+    async function cargarFestivos() {
+        const pais = document.getElementById('paisSelect').value;
+        const anio = document.getElementById('anioInput').value;
+
+        if (!pais || !anio) {
+            document.getElementById('contenedor-tabla').innerHTML = '<div class="error-msg">Por favor selecciona país y año.</div>';
+            return;
+        }
+
+        document.getElementById('contenedor-tabla').innerHTML = '<div class="loading">Cargando festivos...</div>';
+
+        try {
+            const url = `/api/festivo/listar/${encodeURIComponent(pais)}/${anio}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('Error al obtener los festivos');
+            const data = await resp.json();
+
+            if (!data || data.length === 0) {
+                document.getElementById('contenedor-tabla').innerHTML = '<div class="sin-datos">No hay festivos para este año.</div>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(f => {
+                // Determinar el tipo de festivo
+                let tipoTexto = '';
+                let badgeClass = '';
+                if (f.tipo === 1) { tipoTexto = 'Fijo'; badgeClass = 'fijo'; }
+                else if (f.tipo === 2) { tipoTexto = 'Puente'; badgeClass = 'puente'; }
+                else if (f.tipo === 3) { tipoTexto = 'Pascua'; badgeClass = 'pascua'; }
+                else if (f.tipo === 4) { tipoTexto = 'Pascua + Puente'; badgeClass = 'pascua-puente'; }
+                else { tipoTexto = 'Desconocido'; badgeClass = ''; }
+
+                // Construir fecha en formato dd/mm/yyyy
+                const fecha = `${f.dia.toString().padStart(2, '0')}/${f.mes.toString().padStart(2, '0')}/${anio}`;
+
+                html += `
+                    <tr>
+                        <td>${fecha}</td>
+                        <td><strong>${f.nombre}</strong></td>
+                        <td><span class="badge ${badgeClass}">${tipoTexto}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            document.getElementById('contenedor-tabla').innerHTML = html;
+
+        } catch (error) {
+            document.getElementById('contenedor-tabla').innerHTML = `<div class="error-msg">❌ Error: ${error.message}</div>`;
+        }
+    }
+
+    // Cargar automáticamente al abrir la página
+    window.onload = cargarFestivos;
+</script>
+</body>
+</html>
