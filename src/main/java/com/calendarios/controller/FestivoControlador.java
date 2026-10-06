@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+// HU2 - Tarea 4: Endpoint para listar festivos por año
 @RestController
 @RequestMapping("/api/festivo")
 public class FestivoControlador {
