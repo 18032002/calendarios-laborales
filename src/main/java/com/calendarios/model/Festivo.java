@@ -1,7 +1,7 @@
 package com.calendarios.model;
 
 import jakarta.persistence.*;
-// HU1 - Tarea 12: Entidad que mapea la tabla Festivo
+
 @Entity
 public class Festivo {
     @Id
