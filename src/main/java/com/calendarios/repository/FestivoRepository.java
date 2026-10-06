@@ -5,7 +5,7 @@ import com.calendarios.model.Pais;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
-
+// HU1 - Tarea 13: Repositorio para consultas de festivos por país
 @Repository
 public interface FestivoRepository extends JpaRepository<Festivo, Long> {
     List<Festivo> findByPais(Pais pais);
