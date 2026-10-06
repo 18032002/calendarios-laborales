@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+// HU2 - Tarea 2: Implementa lógica de puente festivo (traslado a lunes)
 @Service
 public class FestivoServicio {
 
