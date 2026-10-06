@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-// HU1 - Tarea 16: Endpoint /api/festivo/consultar
 @RestController
 @RequestMapping("/api/festivo")
 public class FestivoControlador {

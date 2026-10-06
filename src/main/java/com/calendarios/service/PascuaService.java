@@ -3,7 +3,6 @@ package com.calendarios.service;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
-// HU1 - Tarea 14: Cálculo del Domingo de Pascua (fórmula de Gauss)
 @Service
 public class PascuaService {
     
