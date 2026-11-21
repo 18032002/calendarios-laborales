@@ -5,8 +5,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  azureSubscription: 'MiConexionAzure'   
-  webAppName: 'calendarios-app'          
   javaVersion: '17'
 
 stages:
@@ -38,25 +36,4 @@ stages:
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
-
-- stage: Deploy
-  displayName: 'Etapa 2: Deploy (CD)'
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - job: DeployJob
-    steps:
-    - task: DownloadBuildArtifacts@1
-      inputs:
-        buildType: 'current'
-        downloadType: 'single'
-        artifactName: 'drop'
-        downloadPath: '$(System.ArtifactsDirectory)'
-
-    - task: AzureWebApp@1
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        appType: 'webAppLinux'
-        appName: '$(webAppName)'
-        package: '$(System.ArtifactsDirectory)/drop/**/*.jar'
-        runtimeStack: 'JAVA|17-java17'
+        
