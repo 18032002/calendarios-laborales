@@ -1,12 +1,12 @@
 trigger:
-  - main
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
   azureSubscription: 'MiConexionAzure'   
-  webAppName: 'calendarios-app'           
+  webAppName: 'calendarios-app'          
   javaVersion: '17'
 
 stages:
@@ -15,10 +15,11 @@ stages:
   jobs:
   - job: BuildJob
     steps:
-    - task: UseJavaVersion@1
+    - task: JavaToolInstaller@0
       inputs:
         versionSpec: '$(javaVersion)'
-        distribution: 'temurin'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
 
     - task: Maven@3
       inputs:
